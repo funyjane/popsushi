@@ -8,9 +8,14 @@ import { SUPABASE_COOKIE_OPTIONS } from "@/lib/supabase/cookie-config";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // See lib/supabase/server.ts — prefer internal hostname for server-side
+  // fetches; the browser client uses NEXT_PUBLIC_SUPABASE_URL instead.
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key =
+    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       cookieOptions: SUPABASE_COOKIE_OPTIONS,
       cookies: {
