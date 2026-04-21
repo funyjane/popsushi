@@ -1,50 +1,66 @@
-import { createServerAnonClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type HelloPayload = {
-  now: string;
-  postgres_version: string;
-  postgis: string;
-};
-
 export default async function Home() {
-  const supabase = createServerAnonClient();
-  const { data, error } = await supabase.rpc("hello_rpc");
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role === "chef") redirect("/chef/bookings");
+    if (profile?.role === "customer") redirect("/bookings");
+    // no profile yet (trigger failed or mid-signup) — fall through to landing
+  }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-6 py-16 font-mono">
-      <h1 className="text-3xl font-semibold tracking-tight">PopSushi</h1>
-      <p className="text-zinc-600 dark:text-zinc-400">
-        Phase 0 hello-world. If you&apos;re reading this and the block below
-        shows a timestamp, the web container is talking to Postgres through
-        kong → postgrest.
-      </p>
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-8 px-6 py-16">
+      <header className="space-y-2">
+        <h1 className="text-4xl font-semibold tracking-tight">PopSushi</h1>
+        <p className="text-zinc-600 dark:text-zinc-400">
+          Book a private sushi chef for your home or event.
+        </p>
+      </header>
 
-      {error ? (
-        <pre className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {JSON.stringify({ error }, null, 2)}
-        </pre>
-      ) : (
-        <pre className="overflow-x-auto rounded-md border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-          {JSON.stringify(data as HelloPayload, null, 2)}
-        </pre>
-      )}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/signup"
+          className="flex-1 rounded-md bg-zinc-900 px-4 py-3 text-center text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        >
+          Sign up
+        </Link>
+        <Link
+          href="/login"
+          className="flex-1 rounded-md border border-zinc-300 px-4 py-3 text-center text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
+          Log in
+        </Link>
+      </div>
 
-      <ul className="text-sm text-zinc-500 dark:text-zinc-400">
-        <li>
-          Studio:{" "}
-          <a className="underline" href="http://localhost:54323">
-            localhost:54323
-          </a>
-        </li>
-        <li>
-          Inbucket:{" "}
-          <a className="underline" href="http://localhost:54324">
-            localhost:54324
-          </a>
-        </li>
-      </ul>
+      <footer className="mt-8 text-xs text-zinc-500 dark:text-zinc-500">
+        <p>Local dev services:</p>
+        <ul className="mt-1 space-y-0.5">
+          <li>
+            <a className="underline" href="http://localhost:54323">
+              Supabase Studio
+            </a>
+          </li>
+          <li>
+            <a className="underline" href="http://localhost:54324">
+              Inbucket (auth emails)
+            </a>
+          </li>
+        </ul>
+      </footer>
     </main>
   );
 }
