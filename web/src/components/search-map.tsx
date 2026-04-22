@@ -12,6 +12,10 @@ type Props = {
   onCustomerChange: (v: LatLng) => void;
   chefs: ChefPin[];
   onChefClick?: (chefId: string) => void;
+  // Kiosk/demo mode: disable pan/zoom/drag and hide nav controls so the
+  // map reads as a still image driven by props.
+  interactive?: boolean;
+  heightClass?: string;
 };
 
 const TILE_URL =
@@ -23,6 +27,8 @@ export function SearchMap({
   onCustomerChange,
   chefs,
   onChefClick,
+  interactive = true,
+  heightClass = "h-80",
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -52,18 +58,26 @@ export function SearchMap({
       },
       center: [customer.lng, customer.lat],
       zoom: 11,
+      interactive,
     });
-    map.addControl(new maplibregl.NavigationControl({}), "top-right");
+    if (interactive) {
+      map.addControl(new maplibregl.NavigationControl({}), "top-right");
+    }
 
-    // Customer pin — draggable, accent-colored so it reads distinct from
-    // the chef pins.
-    const marker = new maplibregl.Marker({ color: "#059669", draggable: true })
+    // Customer pin — draggable in real UI, accent-colored so it reads distinct
+    // from chef pins. In kiosk/demo mode it's non-draggable and purely visual.
+    const marker = new maplibregl.Marker({
+      color: "#059669",
+      draggable: interactive,
+    })
       .setLngLat([customer.lng, customer.lat])
       .addTo(map);
-    marker.on("dragend", () => {
-      const { lat, lng } = marker.getLngLat();
-      onCustomerChangeRef.current({ lat, lng });
-    });
+    if (interactive) {
+      marker.on("dragend", () => {
+        const { lat, lng } = marker.getLngLat();
+        onCustomerChangeRef.current({ lat, lng });
+      });
+    }
 
     mapRef.current = map;
     customerMarkerRef.current = marker;
@@ -143,7 +157,7 @@ export function SearchMap({
     <>
       <div
         ref={containerRef}
-        className="h-80 w-full overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700"
+        className={`${heightClass} w-full overflow-hidden rounded-md border border-zinc-300 dark:border-zinc-700`}
       />
       <style>{`
         .chef-pin {
