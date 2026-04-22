@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchMap } from "@/components/search-map";
+import { StarRating } from "@/components/star-rating";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // SF city hall — sensible default so the map has data on first paint.
@@ -17,6 +18,7 @@ type ChefResult = {
   chef_lng: number;
   years_experience: number | null;
   avg_rating: number | null;
+  review_count?: number | null;
   distance_km: number;
   menu_id: string;
   menu_name: string;
@@ -149,10 +151,18 @@ export default function SearchPage() {
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-3">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <h2 className="text-lg font-semibold tracking-tight">
                     {r.display_name}
                   </h2>
+                  {r.avg_rating !== null && (
+                    <StarRating
+                      value={Number(r.avg_rating)}
+                      size="sm"
+                      showValue
+                      reviewCount={r.review_count ?? undefined}
+                    />
+                  )}
                   <span className="text-xs text-zinc-500">
                     {r.base_address} · {r.distance_km.toFixed(1)} km
                   </span>

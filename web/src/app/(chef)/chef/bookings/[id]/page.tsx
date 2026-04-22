@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
+import { StarRating } from "@/components/star-rating";
 import { formatEventAt, formatPrice, formatRelative } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ChefBookingActions } from "./actions";
@@ -23,11 +24,18 @@ export default async function ChefBookingDetail({ params }: PageProps) {
 
   if (!booking) notFound();
 
-  const { data: events } = await supabase
-    .from("booking_events")
-    .select("from_status, to_status, note, created_at")
-    .eq("booking_id", id)
-    .order("created_at", { ascending: true });
+  const [{ data: events }, { data: review }] = await Promise.all([
+    supabase
+      .from("booking_events")
+      .select("from_status, to_status, note, created_at")
+      .eq("booking_id", id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("rating, comment, created_at")
+      .eq("booking_id", id)
+      .maybeSingle(),
+  ]);
 
   const customer = booking.profiles as {
     display_name: string;
@@ -123,6 +131,25 @@ export default async function ChefBookingDetail({ params }: PageProps) {
       )}
 
       <ChefBookingActions bookingId={booking.id} status={booking.status} />
+
+      {review && (
+        <section className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs uppercase tracking-wide text-zinc-500">
+              Customer review
+            </h2>
+            <StarRating value={review.rating} size="sm" />
+          </div>
+          {review.comment && (
+            <p className="whitespace-pre-line text-sm leading-relaxed">
+              {review.comment}
+            </p>
+          )}
+          <p className="text-xs text-zinc-500">
+            {formatRelative(review.created_at)}
+          </p>
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs uppercase tracking-wide text-zinc-500">

@@ -4,6 +4,7 @@ import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { formatEventAt, formatPrice, formatRelative } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CustomerBookingActions } from "./actions";
+import { CustomerReviewSection } from "./review";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,18 @@ export default async function CustomerBookingDetail({ params }: PageProps) {
 
   if (!booking) notFound();
 
-  const { data: events } = await supabase
-    .from("booking_events")
-    .select("from_status, to_status, note, created_at")
-    .eq("booking_id", id)
-    .order("created_at", { ascending: true });
+  const [{ data: events }, { data: review }] = await Promise.all([
+    supabase
+      .from("booking_events")
+      .select("from_status, to_status, note, created_at")
+      .eq("booking_id", id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("rating, comment, created_at, updated_at")
+      .eq("booking_id", id)
+      .maybeSingle(),
+  ]);
 
   const chef = booking.chef_profiles as {
     base_address: string;
@@ -124,6 +132,14 @@ export default async function CustomerBookingDetail({ params }: PageProps) {
       )}
 
       {canCancel && <CustomerBookingActions bookingId={booking.id} />}
+
+      {booking.status === "completed" && (
+        <CustomerReviewSection
+          bookingId={booking.id}
+          chefName={chef.profiles.display_name}
+          existing={review ?? null}
+        />
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs uppercase tracking-wide text-zinc-500">
