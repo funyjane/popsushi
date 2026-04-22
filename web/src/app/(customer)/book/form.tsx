@@ -15,6 +15,7 @@ type Props = {
   currency: string;
   minGuests: number;
   maxGuests: number;
+  durationMinutes: number;
   defaults: { lat: number; lng: number; address: string; guests: number };
 };
 
@@ -42,6 +43,7 @@ export function BookForm({
   currency,
   minGuests,
   maxGuests,
+  durationMinutes,
   defaults,
 }: Props) {
   const router = useRouter();
@@ -113,7 +115,11 @@ export function BookForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <Field label="Event date & time" error={errors.event_at?.message}>
+      <Field
+        label="Event date & time"
+        error={errors.event_at?.message}
+        hint={`~${formatDuration(durationMinutes)} service window`}
+      >
         <input
           type="datetime-local"
           min={minEventAtLocal()}
@@ -213,6 +219,13 @@ function Field({
       )}
     </label>
   );
+}
+
+function formatDuration(min: number) {
+  if (min % 60 === 0) return `${min / 60}h`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h === 0 ? `${m}m` : `${h}h ${m}m`;
 }
 
 function formatPrice(cents: number, currency: string) {

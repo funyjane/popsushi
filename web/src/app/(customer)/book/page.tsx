@@ -43,7 +43,7 @@ export default async function BookPage({ searchParams }: PageProps) {
     supabase
       .from("menus")
       .select(
-        "id, name, description, price_per_person_cents, currency, min_guests, max_guests, is_published, chef_id",
+        "id, name, description, price_per_person_cents, currency, min_guests, max_guests, duration_minutes, is_published, chef_id",
       )
       .eq("id", menuId)
       .maybeSingle(),
@@ -95,6 +95,7 @@ export default async function BookPage({ searchParams }: PageProps) {
         currency={menu.currency}
         minGuests={menu.min_guests}
         maxGuests={menu.max_guests}
+        durationMinutes={menu.duration_minutes ?? 240}
         defaults={{
           lat: Number(lat),
           lng: Number(lng),
