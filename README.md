@@ -30,6 +30,10 @@ Password is `password123` for all seeded users.
 
 Chef profiles are pre-populated with SF Bay Area coordinates and one published menu each.
 
+### Kiosk demo
+
+Visit **http://localhost:3000/kiosk** (or click **▶ Watch demo** on the landing page) for a ~75s auto-playing walkthrough of the end-to-end flow — customer discovery, booking request, chef inbox, accept, confirmation, review — that loops forever. Scenes are self-contained and run fully offline (no DB or network calls), so it's safe to leave running on a kiosk screen. Press **Esc** or click **Exit** to leave.
+
 ## Common operations
 
 ```bash
